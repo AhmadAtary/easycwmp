@@ -56,17 +56,51 @@ management_server_set_periodic_enable() {
 }
 
 management_server_get_connection_request_url() {
-	local val
-	if [ -z "$default_management_server_connection_request_url" ]; then
-		local intf=`$UCI_GET easycwmp.@local[0].interface 2> /dev/null`
-		local ip=`ifconfig "$intf" | grep inet | sed 's/^ *//g' | cut -f 2 -d ' '|cut -f 2 -d ':'`
-		local port=`$UCI_GET easycwmp.@local[0].port 2> /dev/null`
+    local val
 
-		if [ -n "$ip" -a -n "$port" ]; then
-			val="http://$ip:$port/"
-		fi
-	else
-		val=$default_management_server_connection_request_url
-	fi
-	echo $val
+    if [ -z "$default_management_server_connection_request_url" ]; then
+        local intf ip port
+
+        intf="$($UCI_GET easycwmp.@local[0].interface 2>/dev/null)"
+        port="$($UCI_GET easycwmp.@local[0].port 2>/dev/null)"
+
+        # Extract IPv4 address safely from ifconfig output
+        # Handles formats like: "inet addr:1.2.3.4" and "inet 1.2.3.4"
+        ip="$(ifconfig "$intf" 2>/dev/null | awk '
+            /inet addr:/ {sub(/^.*inet addr:/,""); sub(/ .*/,""); print; exit}
+            $1=="inet"   {print $2; exit}
+        ')"
+
+        # Remove ALL whitespace (spaces, tabs, CR, LF) just in case
+        ip="$(echo "$ip" | tr -d ' \t\r\n')"
+        port="$(echo "$port" | tr -d ' \t\r\n')"
+
+        # Basic IPv4 sanity check (optional but recommended)
+        if echo "$ip" | grep -Eq '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' && [ -n "$port" ]; then
+            val="http://$ip:$port/"
+        else
+            val=""
+        fi
+    else
+        # Also sanitize the default value (in case it has spaces)
+        val="$(echo "$default_management_server_connection_request_url" | tr -d ' \t\r\n')"
+    fi
+
+    echo "$val"
 }
+
+# management_server_get_connection_request_url() {
+# 	local val
+# 	if [ -z "$default_management_server_connection_request_url" ]; then
+# 		local intf=`$UCI_GET easycwmp.@local[0].interface 2> /dev/null`
+# 		local ip=`ifconfig "$intf" | grep inet | sed 's/^ *//g' | cut -f 2 -d ' '|cut -f 2 -d ':'`
+# 		local port=`$UCI_GET easycwmp.@local[0].port 2> /dev/null`
+
+# 		if [ -n "$ip" -a -n "$port" ]; then
+# 			val="http://$ip:$port/"
+# 		fi
+# 	else
+# 		val=$default_management_server_connection_request_url
+# 	fi
+# 	echo $val
+# }

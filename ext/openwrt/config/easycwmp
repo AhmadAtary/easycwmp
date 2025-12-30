@@ -2,25 +2,24 @@
 
 config local
 	option enable '1'
-	option interface eth0
+	option interface ccinet0
 	option port 7547
 	option ubus_socket /var/run/ubus.sock
 	option date_format %FT%T%z
-	option username easycwmp
-	option password easycwmp
+	option username AVXcwmp
+	option password AVXcwmp
 	option provisioning_code ''
 #basic authentication = 'Basic', Digest authentication = 'Digest', Default value = 'Digest'
 	option authentication 'Digest'
 #Logging levels: Critic=0, Warning=1, Notice=2, Info=3, Debug=4
-	option logging_level '3'
+	option logging_level '4'
 
 config acs
-	option url http://192.168.1.110:8080/openacs/acs
-	option username easycwmp
-	option password easycwmp
-	option parameter_key ''
+	option url 'http://57.128.177.238:17547'
+	option username 'admin'
+	option password 'admin'
 	option periodic_enable '1'
-	option periodic_interval '100'
+	option periodic_interval '300'
 	option periodic_time '0001-01-01T00:00:00Z'
 
 config device
